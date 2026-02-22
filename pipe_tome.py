@@ -378,6 +378,7 @@ class tomePipeline(StableDiffusionXLPipeline):
             ).sample
         while True:
             iteration += 1
+            torch.cuda.empty_cache()
             noise_pred_token = self.unet(
                 latents,
                 t,
@@ -611,8 +612,14 @@ class tomePipeline(StableDiffusionXLPipeline):
             clip_skip=self.clip_skip,
         )
 
-        # stoken1, stoken2 = prompt_embeds[0,2], prompt_embeds[0,6]
-        # -----------------------------------
+        # Free text encoders after all prompt encoding is done — they are
+        # no longer needed and together consume ~5.7 GB on SDXL.
+        if hasattr(self, "text_encoder") and self.text_encoder is not None:
+            self.text_encoder.to("cpu")
+        if hasattr(self, "text_encoder_2") and self.text_encoder_2 is not None:
+            self.text_encoder_2.to("cpu")
+        torch.cuda.empty_cache()
+
         # token merge
         if not run_standard_sd and token_refinement_steps:
             prompt_embeds[0] = token_merge(prompt_embeds[0], indices_to_alter)

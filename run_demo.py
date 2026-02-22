@@ -45,7 +45,8 @@ def load_model(config, device):
     # stable.enable_xformers_memory_efficient_attention()
     stable.unet.requires_grad_(False)
     stable.vae.requires_grad_(False)
-    # stable.enable_model_cpu_offload()
+    stable.unet.enable_gradient_checkpointing()
+    stable.enable_vae_slicing()
 
     prompt_parser = PromptParser(stable_diffusion_version)
 
@@ -131,6 +132,9 @@ def main():
         token_indices = prompt_parser._get_indices(config.prompt)
         prompt_anchor = prompt_parser._split_prompt(doc)
         token_indices, prompt_anchor = filter_text(token_indices, prompt_anchor)
+        del nlp, doc
+        import gc; gc.collect()
+        torch.cuda.empty_cache()
     else:
         token_indices = config.token_indices
         prompt_anchor = config.prompt_anchor
