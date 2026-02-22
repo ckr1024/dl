@@ -45,7 +45,6 @@ def load_model(config, device):
     # stable.enable_xformers_memory_efficient_attention()
     stable.unet.requires_grad_(False)
     stable.vae.requires_grad_(False)
-    stable.unet.enable_gradient_checkpointing()
     stable.enable_vae_slicing()
 
     prompt_parser = PromptParser(stable_diffusion_version)
